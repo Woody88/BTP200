@@ -1,0 +1,28 @@
+#Makefile for Workshop 1 - GCC Platform
+# Makefile
+
+#----------------------------------------------------------
+# Platform Variables
+
+# uncomment to select option
+OPT=
+#OPT=-std=c++0x
+
+#----------------------------------------------------------
+# Set of Rules
+
+# links the binary components together to form the executable
+w1: w1.o getPosInt.o
+	g++ -o w1 w1.o getPosInt.o
+
+# recompiles w1.cpp if any recent changes have affected it
+w1.o: w1.cpp getPosInt.h w1.h getPostInt.cpp
+	g++ -c $(OPT) w1.cpp  getPostInt.cpp
+
+# recompiles getPosInt.cpp if any recent changes have affected it 
+getPosInt.o: getPosInt.cpp getPosInt.h
+	g++ -c $(OPT) getPosInt.cpp w1.cpp
+
+# removes intermediate files
+clean:
+	rm *.o

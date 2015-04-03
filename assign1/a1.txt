@@ -1,0 +1,393 @@
+Script started on Wed 11 Feb 2015 04:43:53 PM EST
+wdelhia@matrix:~/btp200/assign1> whoami
+wdelhia
+wdelhia@matrix:~/btp200/assign1> cat GS1Prefix.h
+// GS1Prefix.h 
+// BTP200 - Assignment 1
+// WOODSON DELHIA
+const int MAX = 700;
+
+/////////////////////////////////////////////////////
+// Prefix object that will contain prefixRanges.txt  //  
+///////////////////////////////////////////////////
+struct Prefix {
+
+	int  no;             // number of entries
+	int  area[MAX];      // area elements
+	char pubLow[MAX][8]; // low end of publisher range
+	char pubHgh[MAX][8]; // high end of publisher range
+	int  pubLen[MAX];    // no of chars in publisher string
+
+};
+
+bool isRegistered(const Prefix* p, int area);
+int minNoDigits(const Prefix* p, int area);
+bool isRegistered(const Prefix* p, int area, const char* publisher);
+bool load(const char*, Prefix*);
+wdelhia@matrix:~/btp200/assign1> cat GS1Prefix.cpp 
+// GS1Prefix.cpp 
+// BTP200 - Assignment 1
+// WOODSON DELHIA
+
+#include <iostream>
+#include <fstream>
+#include <cstring>
+#include "GS1Prefix.h"
+using namespace std;
+
+////////////////////////////////////////////////
+// Load prefixRanges.txt into struct             //
+//////////////////////////////////////////////
+bool load(const char* filename, Prefix* prefix) {
+	bool rc = false;
+	if (filename != nullptr) {
+		std::ifstream file(filename);
+		if (file.is_open()) {
+			int no = 0;
+			while (file.good()) {  // version 1.2
+				file >> prefix->area[no] >> prefix->pubLow[no]; // version 1.3
+				if (file.good()) {
+					file >> prefix->pubHgh[no]; // version 1.3
+					prefix->pubLen[no] = std::strlen(prefix->pubLow[no]);
+					no++;
+				}
+			}
+			if (no > 0) {
+				rc = true;
+				prefix->no = no;
+			}
+		}
+	}
+	return rc;
+}
+
+////////////////////////////////////////////////////////////
+// Verifies if area sent match any aread in the struct   //
+//////////////////////////////////////////////////////////
+bool isRegistered(const Prefix* p, int area){
+	
+	int valid = 0;
+	for(int i = 0; i < p-> no; i++) {
+		if(p->area[i] == area){
+			valid = 1;
+			i = p->no;
+		}
+	
+	}
+	
+	return valid;
+}
+
+////////////////////////////////////////////////////////
+// Look for the min length of the area's publisher   //   
+//////////////////////////////////////////////////////
+int minNoDigits(const Prefix* p, int area){
+	int publisherLen = 0;
+	
+	for(int i = 0; i < p->no; i++){
+		if(p->area[i] == area){
+			publisherLen = p->pubLen[i];	
+			i = p->no;
+		}
+	}
+	return publisherLen;
+}
+
+/////////////////////////////////////////////////////////////////
+// Verifies if the publisher is within range of all possible  //
+// combination of publisher using pubHgh and publow          // 
+//////////////////////////////////////////////////////////////
+bool isRegistered(const Prefix* p, int area, const char* publisher){
+	int valid = 0;
+	
+	for(int i = 0; i < p->no; i++){
+		if(p->area[i] == area && strlen(publisher) == p->pubLen[i] ){
+			if(atoi(publisher)>= atoi(p->pubLow[i]) && atoi(publisher) <= atoi(p->pubHgh[i])){
+				valid = 1;
+			}
+		}			
+	}
+	return valid;
+}
+wdelhia@matrix:~/btp200/assign1> cat EAN.h
+// EAN.H 
+// BTP200
+// WOODSON DELHIA
+
+struct Prefix;
+
+bool isValid(const char* str);
+
+bool isRegistered(const Prefix* p, const char* str, char area[],
+	char publisher[], char title[]);
+wdelhia@matrix:~/btp200/assign1> cat EAN.cpp 
+// EAN.cpp
+// BTP200 - Assignment 1
+// Woodson Delhia
+
+#include <iostream>
+#include <iomanip>
+#include <cstring>
+#include <stdlib.h>
+using namespace std;	
+#include "EAN.h"
+#include "GS1Prefix.h"
+#define  PREFIX_LIST "prefixRanges.txt"
+
+///////////////////////////////////////////////////////////////
+// Check if its a valid EAN format                          //
+// Validates if first 3 digits is equal to 978 or 979      //
+// Validates if ean is 13 digits                          //
+// Validates Check digits				 //
+//////////////////////////////////////////////////////////
+bool isValid(const char* str){
+	int oddNum = 0, evenNum = 0, total, valid = 0, tempSum = 0;			
+		
+	if(str == NULL|| str[0] != '9' || str[1] != '7')
+		valid = 0;
+	else 
+		if(!(str[2] != '8' || str[2] != '9'))
+			valid = 0;
+		else{
+			////////// This point we know its EAN number //////////
+			if(strlen(str) == 13) {
+				valid = 1;
+				for(int i = 0; i < strlen(str); i++){                  //Loop through str array
+					if(!isdigit(str[i])){                         //Validate if str at i position is a digit
+						valid = 0;
+						break;                               //If not digit break loop
+					}	
+					else	{
+							if((i+1)%2 == 0){           //Valid if i is not equal to 12 and is an even digit
+								evenNum+=((str[i] - '0')*3);
+								tempSum += evenNum;
+							}	 
+							else{ 
+								oddNum+=(str[i] - '0');
+								tempSum += oddNum;
+							}	
+						}
+				}
+			}
+
+			if(oddNum != 0 && evenNum != 0){            //Validate that there is a value greate than 0 in even and odd Num
+				total = oddNum + evenNum;          
+				if((total%10) == 0)                //If total a modulo of 10 EAN number is valid
+					valid = 1;
+				else
+					valid = 0;
+			}	
+		}
+	return valid;
+}
+
+//////////////////////////////////////////////////////////////
+// Validates if string a is valid EAN number 		   //
+// If is contained in prefix table EAN is registered      //
+///////////////////////////////////////////////////////////
+bool isRegistered(const Prefix* p, const char* str, char area[],
+	char publisher[], char title[]){
+	int valid = 0, areaCheck = 0, startPos = 3, areaMax = 5, pubMax = 7, titleMax = 6, position = 0;
+
+	area[0] = {'\0'};
+	publisher[0] = {'\0'};
+	title[0] = {'\0'};
+
+	/////start at position 3 to skip first 3 digits and check if area registered/////
+	for(int i = startPos; i < startPos + areaMax; i++){ 
+		area[i-startPos] = str[i];
+		area[(i-startPos)+1] = '\0';
+		areaCheck = atoi(area);
+		if(isRegistered(p, areaCheck)){
+			valid = 1;
+			position = i + 1;
+			i = startPos + areaMax;
+		}
+	}
+
+	/////If area valid check min length of that area's publisher/////
+	if(valid == 1){
+		int minPublen = 0;
+		minPublen = minNoDigits(p, areaCheck);	
+		if(minPublen == 0)
+			valid =0;
+			
+	}
+	
+	/////If length found verifies if publisher is valid/////
+	if(valid == 1){
+		int k = 0, tempPos = 0;
+		
+		valid = 0;
+		
+		for(int i = position; i < position + pubMax; i++){
+			publisher[k] = str[i];
+			publisher[k+1] = '\0';
+			if(isRegistered(p,areaCheck, publisher)){		
+				valid = 1;
+				tempPos = i;
+				i = position + pubMax;
+			}
+			k++;
+		}
+		position = tempPos + 1;
+	}
+	
+	/////If publisher valid last remaining digits aside from the last digit are the title/////
+	if(valid == 1){
+		int l = 0; 
+
+		while(position < 12){
+			title[l] = str[position];
+			title[l+1] = '\0';
+			l++;
+			position++;
+		}	
+	}
+	return valid;
+}
+wdelhia@matrix:~/btp200/assign1> g++ -std=c++0x a1test.cpp GS1Prefix.cpp EAN.cpp
+wdelhia@matrix:~/btp200/assign1> a.out 
+Passed test    1 (load(nullptr))
+Passed test    2 (load(PREFIX))
+GS1Prefix Tests
+===============
+Passed test    3 (isRegistered(prefix, -1))
+Passed test    4 (isRegistered(prefix, 99955))
+Passed test    5 (isRegistered(prefix, 0))
+Passed test    6 (isRegistered(prefix, -1, "0"))
+Passed test    7 (isRegistered(prefix, 99955, "0"))
+Passed test    8 (isRegistered(prefix, 0, "10"))
+Passed test    9 (isRegistered(prefix, 99955, "0"))
+Passed test   10 (minNoDigits(prefix, -1))
+Passed test   11 (minNoDigits(prefix, 0))
+Passed test   12 (minNoDigits(prefix, 92))
+
+GS1 Prefix Tests passed!
+
+EAN Tests
+=========
+Passed test   13 (isValid(nullptr))
+Passed test   14 (isValid(""))
+Passed test   15 (isValid("9789070002046"))
+Passed test   16 (isValid("9789070002043"))
+
+EAN Tests passed!
+
+EAN Registered Tests
+====================
+Passed test   17 (isRegistered(prefix, "9789070002046", ...))
+Passed test   18 (isRegistered(prefix, "9789995500009", ...))
+Passed test   19 (isRegistered(prefix, ...) returned true for 9780000000002)
+Passed test  119 (isRegistered(prefix, ...) returned true for 9788070000007)
+Passed test  219 (isRegistered(prefix, ...) returned true for 9789020000009)
+Passed test  319 (isRegistered(prefix, ...) returned true for 9789559500001)
+Passed test  419 (isRegistered(prefix, ...) returned true for 9789679989007)
+Passed test  519 (isRegistered(prefix, ...) returned true for 9789781990007)
+Passed test  619 (isRegistered(prefix, ...) returned true for 9789946000008)
+Passed test  719 (isRegistered(prefix, ...) returned true for 9789961700006)
+Passed test  819 (isRegistered(prefix, ...) returned true for 9789976999907)
+Passed test  919 (isRegistered(prefix, ...) returned true for 9789990389005)
+Passed test 1019 (isRegistered(prefix, ...) returned true for 9789992200001)
+Passed test 1119 (isRegistered(prefix, ...) returned true for 9789993990000)
+
+EAN Registered Tests passed!
+
+
+Your Bookstore modules have passed 1139 of 1139 tests
+
+Congratulations!!!   Your Bookstore modules are ready for submission
+
+wdelhia@matrix:~/btp200/assign1> cat a1MA[K[Kmain.cpp 
+// Version 1.0
+// Chris Szalwinski
+// Nov 15 2013
+
+#include <iostream>
+#include <iomanip>
+#include <cstring>
+
+#define  PREFIX_LIST "prefixRanges.txt"
+#include "GS1Prefix.h"
+#include "EAN.h"
+
+int main() {
+	int keepgoing;
+	char ean[14];
+	Prefix prefix;
+	char area[6], publisher[8], title[7];
+
+	std::cout << "EAN Processor\n"
+		<< "=============\n";
+
+	if (!load(PREFIX_LIST, &prefix))
+		std::cerr << "Could not open file " << PREFIX_LIST << std::endl;
+	else {
+		keepgoing = 1;
+		do {
+			std::cout << "EAN (0 to quit) : ";
+			std::cin.getline(ean, 14);
+			if (!std::cin) {
+				std::cin.clear();
+				std::cin.ignore(2000, '\n');
+				std::cerr << "Error. Try Again " << std::endl;
+			}
+			else if (std::strcmp(ean, "0") == 0) {
+				keepgoing = 0;
+			}
+			else if (std::strlen(ean) != 13) {
+				std::cerr << " Incorrect number of digits. Try again." << std::endl;
+			}
+			else if (isValid(ean) == 0) {
+				std::cerr << " Invalid check digit. Try again." << std::endl;
+			}
+			else if (isRegistered(&prefix, ean, area, publisher, title) == 0) {
+				std::cerr << " This EAN does not have a registered prefix."
+					<< std::endl;
+			}
+			else {
+				std::cout << " Area           : " << area << std::endl;
+				std::cout << " Publisher      : " << publisher << std::endl;
+				std::cout << " Title          : " << title << std::endl;
+			}
+			std::cout << std::endl;
+		} while (keepgoing == 1);
+
+		std::cout << "Signing off ... " << std::endl;
+	}
+}
+wdelhia@matrix:~/btp200/assign1> g++ -std=c++0x a1main.cpp GS1Prefix.cpp EAN.cpp
+wdelhia@matrix:~/btp200/assign1> A.OUT[K[K[K[K[Ka.out
+EAN Processor
+=============
+EAN (0 to quit) : 9789070002046
+ Area           : 90
+ Publisher      : 70002
+ Title          : 04
+
+EAN (0 to quit) : 9780003194875
+ Invalid check digit. Try again.
+
+EAN (0 to quit) : 978000319487
+ Incorrect number of digits. Try again.
+
+EAN (0 to quit) : 9780003194876
+ Area           : 0
+ Publisher      : 00
+ Title          : 319487
+
+EAN (0 to quit) : 9789972000003
+ Area           : 9972
+ Publisher      : 00
+ Title          : 000
+
+EAN (0 to quit) : 9789995500009
+ This EAN does not have a registered prefix.
+
+EAN (0 to quit) : 0
+
+Signing off ... 
+wdelhia@matrix:~/btp200/assign1> exit
+exit
+
+Script done on Wed 11 Feb 2015 04:46:41 PM EST

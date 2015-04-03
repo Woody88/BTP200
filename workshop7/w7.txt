@@ -1,0 +1,98 @@
+Script started on Sun 22 Mar 2015 11:56:16 PM EDT
+wdelhia@matrix:~/btp200/workshop7> whoami
+wdelhia
+wdelhia@matrix:~/btp200/workshop7> whoami[2Pexitvi w7.cpp [2@Item[C[C[C[C[Cw7[Kg++ -o w7 w7.cpp Item.cpp [6Pcat Item.h[C[C[C[C[C[C[C[C[C[C
+class Item {
+private:
+int itemNumber;
+double itemPrice;
+
+public:
+Item();	
+void operator=(int n);
+void operator=(double p); 									//- resets the item's price to p
+bool empty() const; 											//- returns false if the current object contains valid data; true if it is in a safe empty state
+void display(std::ostream& os) const; 						//- inserts into os the item number left-justified in a field width of 8 followed by the item's price right-justified in a field of 10 to 2 decimal places
+
+};
+
+std::istream& operator>>(std::istream& is, Item& i); 		//- extracts data from is and stores it in i if the data is valid
+std::ostream& operator<<(std::ostream& os, const Item& i); 	//- inserts into os the data in i in the format described above#include <iostream>
+#include <iomanip> 
+#include "Item.h"
+
+using namespace std;
+
+Item::Item(){
+
+	itemNumber = 0;
+	itemPrice = 0;
+}
+void Item::operator=(double p) {
+	itemPrice = p;
+} 
+
+void Item::operator=(int n) {
+	itemNumber = n;
+}
+
+bool Item::empty() const {
+	if (itemNumber == 0 && itemPrice == 0) 
+		return true;
+	else 
+		return false;
+
+} 
+
+void Item::display(std::ostream& os) const {
+	os << left << setw(8);
+	os << itemNumber;
+	os << right << setw(10);
+	os << itemPrice;
+}
+std::istream& operator>>(std::istream& is, Item& i) {
+	double price;
+	int number;
+	cout << "Enter an item number: ";
+	is >> number;
+	if (number < 0 )
+		cout << "Invalid Item Number!" << endl;
+	else {
+
+			is.ignore(1000,'\n');
+			is.clear();
+			cout << "Enter an item price: ";
+			is >> price;
+			is.ignore(1000,'\n');
+			is.clear();
+
+			i = price;
+			i = number;
+	}
+
+}
+std::ostream& operator<<(std::ostream& os, const Item& i) {
+	i.display(os);
+}
+wdelhia@matrix:~/btp200/workshop7> cat Item.h Item.cpp whoami[K[2Pexitvi w7.cpp [2@Item[C[C[C[C[Cw7[Kg++ -o w7 w7.cpp Item.cpp 
+wdelhia@matrix:~/btp200/workshop7> w7
+Price List
+==========
+Enter an item number: 234
+Enter an item price: 45.32
+Enter an item number: 235
+Enter an item price: 67.42
+Enter an item number: 236
+Enter an item price: 89.76
+Enter an item number: 9 0
+Enter an item price: 0
+
+  Number     Price
+------------------
+234          45.33
+235          67.42
+236          89.76
+wdelhia@matrix:~/btp200/workshop7> exit
+exit
+
+Script done on Sun 22 Mar 2015 11:57:03 PM EDT

@@ -1,0 +1,146 @@
+Script started on Sun 08 Mar 2015 04:33:54 PM EDT
+wdelhia@matrix:~/btp200/workshop3> whoami
+wdelhia
+wdelhia@matrix:~/btp200/workshop3> cat w3-4.cpp Molecule.h Molecule.cpp 
+// Workshop 3-4 - Classes and Dynamic Memory
+// w3-4.cpp
+
+#include <iostream>
+#include "Molecule.h"
+using namespace std;
+
+
+ int main() {
+     int n;
+     Molecule* molecule;	
+     cout << "Molecular Information\n";
+     cout << "=====================" << endl;
+
+     cout << "Number of Molecules : ";
+     cin >> n;
+
+     // allocate dynamic memory for an array of n Molecules
+     molecule = new Molecule[n];
+
+     for (int i = 0; i < n; i++) {
+         char symbol[21];
+         char description[201];
+         double weight;
+
+         //insert logic that reads input for a single Molecule
+         // insert logic that constructs a single Molecule
+         // insert logic that copies the Molecule into an element of the array
+     	 cout << "Enter Structure: ";
+	 cin.ignore(1000, '\n');
+         cin.clear();
+	 cin.get(symbol, 10, '\n');
+	 cout << "Enter Full Name: ";
+	 cin.ignore(1000, '\n');
+         cin.clear();
+	 cin.get(description, 30, '\n');
+	 cout << "Enter Weight : ";
+	 cin.ignore(1000, '\n');
+         cin.clear();
+	 cin >> weight;
+	 molecule[i] = Molecule(symbol, description, weight);
+ 
+
+     }
+     cout << endl;
+
+     cout << "Structure     Mass Name\n";
+     cout << "========================================" << endl; 
+
+     for (int i = 0; i < n; i++) {
+         molecule[i].display();
+         cout << endl;
+     }
+
+     // deallocate dynamic memory for the array of n Molecules
+     delete [] molecule; 
+	molecule= nullptr;
+}
+class Molecule {
+	char symbol[10];
+	char description[30];
+	double weight;
+
+	public:
+		void display() const;
+		Molecule(); 
+		Molecule(char*, char*, double);
+};
+
+#include <iostream>
+#include <cstring>
+#include <iomanip>
+#include "Molecule.h"
+using namespace std;
+
+Molecule::Molecule(){
+	symbol[0] = '\0';
+	description[0] ='\0';
+	weight = 0.000;
+}
+
+Molecule::Molecule(char* sym, char* desc, double w){
+	
+	//if (symbol == '\0'){
+		strcpy(symbol, sym);
+		//symbol[10-1] = '\0';
+	//}
+
+	//if ( description == '\0'){
+		strcpy(description, desc);
+		//description[30-1] = '\0';
+	//}
+	
+	weight = w;
+
+}
+
+void Molecule::display() const {
+
+	if(symbol == '\0' && description == '\0' && weight == 0.000){
+		cout << "No Data Available" << endl;
+	}
+	else{
+		cout << left << setw(10) << symbol;
+		cout << fixed << setprecision(3); 
+		cout << right << setw(7) << weight;  
+		cout << " " << description << endl;
+		cout.unsetf(ios::right);
+	}
+}	
+wdelhia@matrix:~/btp200/workshop3> g++ -0 w3-4 w3-4.cpp Molecule.c[Kcpp 
+g++: error: unrecognized option ‘-0’
+wdelhia@matrix:~/btp200/workshop3> g++ -0 w3-4 w3-4.cpp Molecule.cpp [1P[1@o
+w3-4.cpp: In function ‘int main()’:
+w3-4.cpp:57:12: error: ‘nullptr’ was not declared in this scope
+wdelhia@matrix:~/btp200/workshop3> g++ -o w3-4 w3-4.cpp Molecule.cpp [C[C[C[C[C[1@ [1@-[1@s[1@t[1@d[1@=[1@c[1@+[1@+[1@0[1@x
+wdelhia@matrix:~/btp200/workshop3> w3-5[K4
+Molecular Information
+=====================
+Number of Molecules : 3
+Enter Structure: H20
+Enter Full Name: Water
+Enter Weight : 18.015
+Enter Structure: CO2
+Enter Full Name: Carbo  n DI ioxide
+Enter Weight : 44.010
+Enter Structure: NaCL l
+Enter Full Name: Sodium Clhori     hlrodi    oride
+Enter Weight : 58.443
+
+Structure     Mass Name
+========================================
+H20        18.015 Water
+
+CO2        44.010 Carbon Dioxide
+
+NaCl       58.443 Sodium Chloride
+
+wdelhia@matrix:~/btp200/workshop3> exit
+exit
+
+Script done on Sun 08 Mar 2015 04:35:54 PM EDT

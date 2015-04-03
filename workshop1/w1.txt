@@ -1,0 +1,59 @@
+Script started on Sun 08 Mar 2015 04:29:39 PM EDT
+wdelhia@matrix:~/btp200/workshop1> whoami
+wdelhia
+wdelhia@matrix:~/btp200/workshop1> [Kwdelhia@matrix:~/btp200/workshop1> cat wa[K1.h w1.cpp getPostInt.h getPostInt.cpp 
+#define MAX 25
+#include <iostream>
+#include "w1.h"
+
+#include "getPostInt.h"
+
+
+ using namespace std;
+
+
+ int main() {
+     int i;
+     i = getPosInt(MAX);
+     cout << "You entered " << i << endl;
+ }
+
+int getPosInt(int max);
+#include <iostream>
+#include "getPostInt.h"
+
+using namespace std;
+
+int getPosInt(int max) {
+     int i;
+     int keepasking;
+
+     keepasking = 1;
+     do {
+         cout << "Enter a positive integer not greater than "
+              << max << " : ";
+         cin >> i;
+         if ( i < 0 || i > max)
+             cout << "Your entry is out of range.  Try again." << endl; 
+         else
+             keepasking = 0;
+     } while ( keepasking == 1 );
+
+     return i;
+ }
+wdelhia@matrix:~/btp200/workshop1> w1[K[Kg++ -o w1 w1.cpp getPostInt.cpp 
+wdelhia@matrix:~/btp200/workshop1> w1
+Enter a positive integer not greater than 25 : 5
+You entered 5
+wdelhia@matrix:~/btp200/workshop1> 25[K6
+If '26' is not a typo you can use command-not-found to lookup the package that contains it, like this:
+    cnf 26
+wdelhia@matrix:~/btp200/workshop1> 26w1g++ -o w1 w1.cpp getPostInt.cpp w1[K
+Enter a positive integer not greater than 25 : 26
+Your entry is out of range.  Try again.
+Enter a positive integer not greater than 25 : 3
+You entered 3
+wdelhia@matrix:~/btp200/workshop1> wzit[K[K[K[Kexit
+exit
+
+Script done on Sun 08 Mar 2015 04:31:27 PM EDT

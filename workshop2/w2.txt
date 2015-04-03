@@ -1,0 +1,163 @@
+Script started on Sun 01 Feb 2015 04:10:03 AM EST
+wwdelhia@matrix:~/btp200/workshop2> whoami
+wdelhia
+wdelhia@matrix:~/btp200/workshop2> cat w2.cpp Fraction.h Fraction.cpp 
+//Workshop 2 - Fraction Simplifier
+//w2.cpp
+
+#include <iostream>
+using namespace std;
+#include "Fraction.h"
+
+ int main() {
+     Fraction fraction;
+     int num, den;
+
+     cout << "Fraction Simplifier" << endl;
+     cout << "===================" << endl;
+
+     cout << "Numerator   : ";
+     cin >> num;
+     cout << "Denominator : ";
+     cin >> den;
+     cout << endl;
+
+     fraction.set(num, den);
+     fraction.display();
+     cout << endl;
+ }
+#include <iostream>
+
+class Fraction {
+
+int num, denom, i;
+bool num_sign, denom_sign;
+
+public:
+        void set(int, int);
+        void simplify();
+        int gcd(int, int);
+        void display();
+};
+
+#include <iostream>
+
+using namespace std;
+
+#include "Fraction.h"
+
+void Fraction::set(int x, int y){
+
+        num = x;
+        denom = y;
+	        
+	if(num == 0 || denom == 0){
+	
+	}
+	else
+		simplify();
+}
+
+void Fraction::simplify(){
+
+        int a, b, result;
+	num_sign = false;
+	denom_sign = false;
+
+        if(num  == 0){
+                set(0, 0);
+        }
+        else if (denom  == 0) {
+                set(0,0);
+        }
+
+        if (num != 0 && denom != 0){
+
+                if (num < 0) {
+                        num_sign = true;
+                        a = num * -1;
+                }
+		else {
+			a = num;
+		}
+                if (denom < 0) {
+                        denom_sign = true;
+                        b = denom * -1;
+                }
+		else {
+			b = denom;
+		}
+                result = gcd(a, b);
+                i++;
+                if(num_sign){
+                        a = a * -1;
+                }
+                if (denom_sign) {
+                        b = b * -1;
+                }
+                num = a/result; 
+		denom = b/result;
+        }
+}
+
+int Fraction::gcd(int k, int l){
+
+        int a, b, c, d;
+        a = k;
+        b = l;
+        c = a/b;
+        d = a%b;
+
+        if(d != 0){
+                gcd(b, d);
+        }
+        else {
+                return b;
+        }
+
+}
+
+void Fraction::display(){
+        if(denom == 0 ){
+		if(num == 0)
+			cout << num << "/" << denom;
+		else 
+			cout << "Undefined";
+	}
+	else
+		cout << num << "/" << denom;
+}
+
+wdelhia@matrix:~/btp200/workshop2> g++ -w[K0[Ko w2 w2.cpp Fraction.cpp 
+wdelhia@matrix:~/btp200/workshop2> w2
+Fraction Simplifier
+===================
+Numerator   : 4
+Denominator : 16
+
+1/4
+wdelhia@matrix:~/btp200/workshop2> w2
+Fraction Simplifier
+===================
+Numerator   : 0
+Denominator : 0
+
+0/0
+wdelhia@matrix:~/btp200/workshop2> w2
+Fraction Simplifier
+===================
+Numerator   : 16
+Denominator : 0
+
+Undefined
+wdelhia@matrix:~/btp200/workshop2> w2
+Fraction Simplifier
+===================
+Numerator   : -16
+Denominator : 8
+
+-2/1
+wdelhia@matrix:~/btp200/workshop2> exit
+exit
+
+Script done on Sun 01 Feb 2015 04:11:24 AM EST
