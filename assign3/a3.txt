@@ -1,0 +1,992 @@
+Script started on Fri 03 Apr 2015 05:06:11 PM EDT
+wdelhia@matrix:~/btp200/assign3> whoami
+wdelhia
+wdelhia@matrix:~/btp200/assign3> cat GS1Prefix.h
+const int MAX = 700;
+
+class Prefix {
+
+	int  no;             // number of entries
+	int  area[MAX];      // area elements
+	char pubLow[MAX][8]; // low end of publisher range
+	char pubHgh[MAX][8]; // high end of publisher range
+	int  pubLen[MAX];    // no of chars in publisher string
+	
+	public:
+	Prefix(const char* filename);
+	bool isRegistered(int area) const;
+	int minNoDigits(int area) const;
+	bool isRegistered(int area, const char* publisher) const;
+};
+
+wdelhia@matrix:~/btp200/assign3> cat GS1Prefix.h[Kcpp 
+#include <iostream>
+#include <fstream>
+#include <cstring>
+#include "GS1Prefix.h"
+using namespace std;
+
+Prefix::Prefix(const char* filename){
+	
+	bool rc = false;
+	if (filename != nullptr) {
+		std::ifstream file(filename);
+		if (file.is_open()) {
+			int no = 0;
+			while (file.good()) {  // version 1.2
+				file >> area[no] >> pubLow[no]; // version 1.3
+				if (file.good()) {
+					file >> pubHgh[no]; // version 1.3
+					pubLen[no] = std::strlen(pubLow[no]);
+					no++;
+				}
+			}
+			if (no > 0) {
+				rc = true;
+				this->no = no;
+			}
+		}
+	}
+
+}
+
+bool Prefix::isRegistered(int marea) const{
+	int valid = 0;
+	for(int i = 0; i < no; i++) {
+		if(area[i] == marea){
+			valid = 1;
+			i = no;
+		}
+	
+	}
+	
+	return valid;
+}
+
+int Prefix::minNoDigits(int area) const{
+	int publisherLen = 0;
+	
+	for(int i = 0; i < this->no; i++){
+		if(this->area[i] == area){
+			publisherLen = this->pubLen[i];	
+			i = this->no;
+		}
+	}
+	return publisherLen;
+}
+bool Prefix::isRegistered(int marea, const char* publisher) const{
+	int valid = 0;
+	for(int i = 0; i < no; i++){
+		if(area[i] == marea && strlen(publisher) == pubLen[i] ){
+			if(atoi(publisher)>= atoi(pubLow[i]) && atoi(publisher) <= atoi(pubHgh[i])){
+				valid = 1;
+			}
+		}			
+	}
+	return valid;
+}
+wdelhia@matrix:~/btp200/assign3> cat GS1Prefix.h[K[K[K[K[K[K[K[K[K[K[KEAN.h
+class Prefix;
+
+ class EAN {
+	
+	char ean[17];
+	char area[6], publisher[8], title[7];
+	char strStyle[2];
+ 	bool registered; 
+		
+	public: 
+	EAN();
+  	EAN(const char* str, const Prefix& list);
+	bool isRegistered(const Prefix& list);
+	bool empty() const;
+	bool isRegistered() const;
+	void style(char);
+	void toStr(char* str) const;
+	void toStrWithStyle(char* str) const;
+	void display(std::ostream& os) const;
+	bool read(std::istream& is, const Prefix& list);
+};
+
+bool isValid(const char* str);
+bool operator==(const EAN& left, const EAN& right);
+std::ostream& operator<<(std::ostream& os, const EAN& ean);
+wdelhia@matrix:~/btp200/assign3> cat EAN.h[Kcpp 
+// EAN Processor
+// BTP200 - Assignment 3
+// EAN.cpp
+// Woodson Delhia
+// date--
+
+#include <iostream>
+#include <iomanip>
+#include <cstring>
+#include <stdlib.h>
+using namespace std;	
+
+#include "EAN.h"
+#include "GS1Prefix.h"
+#define  PREFIX_LIST "prefixRanges.txt"
+
+bool isValid(const char* str){
+	int oddNum = 0, evenNum = 0, total, valid = 0, tempSum = 0;			
+		
+	if(str == NULL|| str[0] != '9' || str[1] != '7')
+		valid = 0;
+	else 
+		if(!(str[2] != '8' || str[2] != '9'))
+			valid = 0;
+		else{
+			////////// This point we know its EAN number //////////
+
+			if(strlen(str) == 13) {
+				valid = 1;
+				for(int i = 0; i < strlen(str); i++){                  //Loop through str array
+					if(!isdigit(str[i])){                         //Validate if str at i position is a digit
+						valid = 0;
+						break;                               //If not digit break loop
+					}
+		
+		
+					else	{
+							if((i+1)%2 == 0){           //Valid if i is not equal to 12 and is an even digit
+								evenNum+=((str[i] - '0')*3);
+								tempSum += evenNum;
+							}	 
+							else{ 
+								oddNum+=(str[i] - '0');
+								tempSum += oddNum;
+							}	
+						}
+				}
+			}
+
+			if(oddNum != 0 && evenNum != 0){            //Validate that there is a value greate than 0 in even and odd Num
+				total = oddNum + evenNum;
+				if((total%10) == 0)                //If total a modulo of 10 EAN number is valid
+					valid = 1;
+				else
+					valid = 0;
+			}	
+		}
+	return valid;
+}
+
+bool EAN::isRegistered(const Prefix& list){
+
+	//cout << "INSIDE IS REGISTERED!" << endl; 
+	//cout << "EAN: " << ean << endl;
+	int valid = 0, areaCheck = 0, startPos = 3, areaMax = 5, pubMax = 7, titleMax = 6, position = 0;
+	
+	
+	for(int i = startPos; i < startPos + areaMax; i++){
+		area[i-startPos] = ean[i];
+		area[(i-startPos)+1] = '\0';
+		areaCheck = atoi(area);
+		if(list.isRegistered(areaCheck)){
+			valid = 1;
+			position = i + 1;
+			i = startPos + areaMax;
+		}
+	}
+
+	if(valid == 1){
+		int minPublen = 0;
+		minPublen = list.minNoDigits(areaCheck);	
+		if(minPublen == 0)
+			valid =0;
+			
+	}
+
+	if(valid == 1){
+		int k = 0, tempPos = 0;
+		
+		valid = 0;
+		
+		for(int i = position; i < position + pubMax; i++){
+			publisher[k] = ean[i];
+			publisher[k+1] = '\0';
+			if(list.isRegistered(areaCheck, publisher)){		
+				valid = 1;
+				tempPos = i;
+				i = position + pubMax;
+			}
+			k++;
+		}
+		position = tempPos + 1;
+	}
+
+	if(valid == 1){
+		int l = 0; 
+
+		while(position < 12){
+			title[l] = ean[position];
+			title[l+1] = '\0';
+			l++;
+			position++;
+		}		
+	}
+	
+	registered = valid;
+	return valid;
+		
+}
+
+EAN::EAN(){
+	ean[0] = '\0';
+	strStyle[0] = '\0';
+	area[0] = '\0';
+	publisher[0] = '\0';
+	title[0] = '\0';
+	registered = false;
+}
+
+EAN::EAN(const char* str, const Prefix& list){
+	if( isValid(str) ){
+		strcpy(ean, str);
+		isRegistered(list);
+		strStyle[0] = '0';
+		strStyle[1] = '\0';
+	}
+	else{
+		ean[0] = '\0';
+	        strStyle[0] = '\0';
+        	area[0] = '\0';
+        	publisher[0] = '\0';
+        	title[0] = '\0';
+		registered = false;
+		
+	}	
+}
+
+bool EAN::empty() const{
+	if(ean[0] == '\0' && strStyle[0] == '\0' && area[0] == '\0' && publisher[0] == '\0' && title[0] == '\0')
+		return true;
+	else
+		return false;
+}
+
+bool EAN::isRegistered() const{
+	// if(area[0] != '\0' && publisher[0] != '\0' && title[0] != '\0')
+	if (registered)
+		return true;
+	else 
+		return false;
+}
+
+void EAN::style(char s){
+
+	strStyle[0] = s;
+	strStyle[1] = '\0';
+}
+void EAN::toStr(char* str) const{
+	strcpy(str, ean);		
+}
+void EAN::toStrWithStyle(char* str) const{
+	int i = 3 + strlen(area) + strlen(publisher) + strlen(title);
+        char string[17] = {'\0'};
+        char styling[2];
+        char lastDigit[2] = {'\0'};
+        str[0] = '\0';
+        lastDigit[0] = ean[12];
+        lastDigit[1] = '\0';
+
+//      cout << "MY STRING IS: " << str << endl;
+        if(isRegistered()){
+                if(strcmp(strStyle, "0") == 0)
+                        strcpy(styling, "-");
+                else
+                        strcpy(styling, strStyle);
+
+                strcat(str, "978");
+                strcat(str, styling);
+                strcat(str, area);
+                strcat(str, styling);
+                strcat(str, publisher);
+                strcat(str, styling);
+                strcat(str, title);
+                strcat(str, styling);
+                strcat(str, lastDigit);
+        }
+        else{
+                strcat(str, ean);
+                //str[strlen(str)] = ean[12];
+                //str[strlen(str)+1] = '\0';
+               
+        }
+
+}
+
+bool EAN::read(std::istream& is, const Prefix& list){
+	char eanNum[14];
+	eanNum[0] = '\0';
+	int valid = 0, loop = 1;
+
+	
+	do{
+		
+		cout << "Add EAN(0 to quit): ";
+		is.getline(eanNum, 14);
+			
+		if( strlen(eanNum)== 0 ){
+			is.clear();
+			is.ignore(2000,'\n');
+			cerr << "Error. Try Again." << endl; 
+		}
+		else if ( strcmp(eanNum,"0") == 0 ){
+			loop = 0;
+			cout << "<-Returning to menu" << endl;
+		}
+		 else if(strlen(eanNum)!= 13){
+                        cerr << "Incorrect number of digits. Try Again" << endl;
+
+                }
+		else if( !isValid(eanNum) ){
+			cout << "Invalid check digit. Try again." << endl;
+		}
+		else{
+			strcpy(ean, eanNum);
+			*this = EAN(eanNum, list);
+			loop = 0;
+			valid = 1;
+		}
+	
+			
+	
+		
+	}while(loop == 1);	
+	
+	return valid;
+}
+
+ void EAN::display(std::ostream& os) const {
+	char eanNum[18];
+	eanNum[0] = '\0'; 
+	toStrWithStyle(eanNum);
+
+	os << right << setw(17) <<  eanNum;
+}
+
+bool operator==(const EAN& left, const EAN& right) {
+ 	char lstr[18] = {'\0'};	
+ 	char rstr[18] = {'\0'};
+
+	left.toStr(lstr);
+	right.toStr(rstr);
+	
+	if (strcmp(lstr,rstr) == 0)
+		return true;
+	else 
+		return false;
+
+}
+
+
+std::ostream& operator<<(std::ostream& os, const EAN& ean){
+	ean.display(os);
+}
+wdelhia@matrix:~/btp200/assign3> cat EAN.cpp [K[K[K[K[K[K[K[KOrder.h
+#include <iostream>
+#include "EAN.h"
+
+class Order {
+
+private:
+
+EAN ean;
+int ordered, delivered;
+
+public:
+
+Order();
+Order(const EAN& ean);
+EAN& getEAN();
+bool add(std::istream& is);
+bool add(int n);
+bool receive(std::istream& is);
+void display(std::ostream& os) const;
+int outstanding() const;
+};
+
+std::ostream& operator<<(std::ostream& os, const Order& order);
+wdelhia@matrix:~/btp200/assign3> cat Order.h[Kcpp 
+#include <iostream>
+#include <iomanip>
+#include "Order.h"
+using namespace std;
+
+Order::Order(){
+	ean = EAN();
+	ordered = 0;
+	delivered = 0;
+}
+
+Order::Order(const EAN& ean){
+	this->ean = ean;
+	ordered = 0;
+	delivered = 0;
+}
+
+EAN& Order::getEAN(){
+	return ean;
+}
+
+bool Order::add(std::istream& is){
+	int n, keepgoing = 1;
+        bool valid;
+
+        do{
+                n = 0;
+                cout << "Quantity (0 to quit): ";
+                is >> n;
+		is.clear();
+                is.ignore(2000,'\n');
+
+
+                if(n < 0){
+                        cout << "Enter a positive number. Try again."<< endl;
+                }
+                else if(n == 0) {
+			cout << "**No Order Added." << endl;
+                        keepgoing = 0;
+                        valid = false;
+                }
+                else {
+                        ordered = n;
+			keepgoing = 0;
+                        valid = true;
+                }
+
+        }while(keepgoing == 1);
+
+        return valid;
+
+}
+
+
+bool Order::add(int n){
+	if(!(ean == EAN()) && !(n < 0)){
+		ordered+=n;
+		return true;
+	}
+	else	
+		return false;
+}
+
+bool Order::receive(std::istream& is){
+ int n, keepgoing = 1;
+        bool valid;
+
+        do{
+                n = 0;
+                cout << "Quantity (0 to quit): ";
+                is >> n;
+		is.clear();
+                is.ignore(2000,'\n');
+	
+                if(n < 0){
+                        cout << "Enter a positive number. Try again."<< endl;
+                }
+                else if(n == 0) {
+			cout << "**No delivery recorded!" << endl;
+                        keepgoing = 0;
+                        valid = false;
+                }
+		else if(n > ordered){
+			cout << n << " not on order. Only " << ordered << " are on order. Try again." << endl;
+		}
+                else {
+                        delivered = n;
+                        keepgoing = 0;
+                        valid = true;
+                }
+
+        }while(keepgoing == 1);
+
+        return valid;
+
+}
+
+void Order::display(std::ostream& os) const{
+	os << left << setw(17);
+	os << ean;
+	os << setw(9);
+	os << ordered;
+	os << setw(11);
+	os << delivered;
+	 
+}
+
+int Order::outstanding()const {
+	//cout << "outstand: " << ordered << endl; 
+	return ordered;
+}
+
+ostream& operator<<(std::ostream& os, const Order& order){
+	order.display(os);
+}
+wdelhia@matrix:~/btp200/assign3> cat Order.cpp h[KEAN.cpp h[KGS1Prefix.cpp h[K[9Pwhoami[2Pexita.outg++ -std=c++0x a2main.cpp GS1Prefix.cpp EAN.cpp[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Ca.out[Kg++ -std=c++0x a2main.cpp GS1Prefix.cpp EAN.cpp[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[11Pcat[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[11@g++ -std=c++0x[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Ca.out[K[1Pexitwhoamicat GS1Prefix.hcpp [9PEAN.hcpp [1POrder.hcpp [Kg++ a3[K[K-o test3 a3test.cpp GS1Prefix.cpp EAN.cpp ORd[K[Krder.cpp 
+GS1Prefix.cpp: In constructor ‘Prefix::Prefix(const char*)’:
+GS1Prefix.cpp:10:18: error: ‘nullptr’ was not declared in this scope
+GS1Prefix.cpp: In member function ‘bool Prefix::isRegistered(int, const char*) const’:
+GS1Prefix.cpp:59:21: error: ‘atoi’ was not declared in this scope
+wdelhia@matrix:~/btp200/assign3> g++ -o test3 a3test.cpp GS1Prefix.cpp EAN.cpp Order.cpp [C[1@-[1@s[1@t[1@d[1@=[1@c[1@+[1@+[1@0[1@x[1@ 
+wdelhia@matrix:~/btp200/assign3> test3
+GS1Prefix Tests
+===============
+Passed test    1 (isRegistered(-1))
+Passed test    2 (isRegistered(99955))
+Passed test    3 (isRegistered(0))
+Passed test    4 (isRegistered(-1, 0))
+Passed test    5 (isRegistered(99955, 0))
+Passed test    6 (isRegistered(0, 10))
+Passed test    7 (isRegistered(99955, 0))
+Passed test    8 (isRegistered(0, 95000000))
+Passed test    9 (minNoDigits(-1))
+Passed test   10 (minNoDigits(0))
+Passed test   11 (minNoDigits(92))
+Passed test   12 (minNoDigits(99955))
+
+GS1 Prefix Tests passed!
+
+EAN Tests
+=========
+Passed test   13 (EAN() and empty())
+Passed test   14 (EAN() and isRegistered())
+Passed test   15 (EAN("9789070002046", ) and empty())
+Passed test   16 (EAN("9789070002046", ) and isRegistered())
+Passed test   17 (EAN(9789070002043) and empty())
+Passed test   18 (EAN("9789070002043", ) and isRegistered())
+Passed test   19 (toStr on EAN() and IBSN("9789070002043", ))
+Passed test   20 (EAN(9789070002046) and toStr(char*))
+Passed test   21 (EAN(...) and toStr(char*))
+Passed test   22 (EAN(9789070002046), style(' ') and toStr(char*))
+Passed test   23 (EAN(9789070002046), style('\0') and toStr(char*))
+Passed test   24 (EAN(9789070002046), style('-') and toStrWithStyle(char*))
+Passed test   25 (EAN(9789070002046), style(' ') and toStrWithStyle(char*))
+Passed test   26 (EAN(9789070002046), style('\0') and toStrWithStyle(char*))
+Passed test   27 (EAN(9789070002046), style('-') and toStrWithStyle(char*))
+Passed test   28 (EAN(9789070002043), style('\0') and toStr(char*))
+
+EAN Tests passed!
+
+EAN Registered Tests
+====================
+Passed test   29 (isRegistered() returned true for 9789070002046)
+Passed test   30 (isRegistered() returned false for 9789995500009)
+Passed test   31 (isRegistered() returned true for 9780000000002)
+Passed test  131 (isRegistered() returned true for 9788070000007)
+Passed test  231 (isRegistered() returned true for 9789020000009)
+Passed test  331 (isRegistered() returned true for 9789559500001)
+Passed test  431 (isRegistered() returned true for 9789679989007)
+Passed test  531 (isRegistered() returned true for 9789781990007)
+Passed test  631 (isRegistered() returned true for 9789946000008)
+Passed test  731 (isRegistered() returned true for 9789961700006)
+Passed test  831 (isRegistered() returned true for 9789976999907)
+Passed test  931 (isRegistered() returned true for 9789990389005)
+Passed test 1031 (isRegistered() returned true for 9789992200001)
+Passed test 1131 (isRegistered() returned true for 9789993990000)
+
+EAN Registered Tests passed!
+
+Order Tests
+===========
+Passed test 1152 (*Order()->getEAN() == EAN() returned true)
+Passed test 1153 (Order(), outstanding() returned 0)
+Passed test 1154 (Order(EAN(9789070002046, list)), outstanding())
+Passed test 1155 (Order(EAN(9789070002046, list)), outstanding())
+Passed test 1156 (Order(EAN(9789070002043, list)), outstanding())
+Passed test 1157 (Order(EAN(9789070002043, list)), add(5), outstanding())
+
+Order Tests passed!
+
+
+Your Bookstore modules have passed 1157 of 1157 tests
+
+Congratulations!!!   Your Bookstore modules are ready for submission
+
+wdelhia@matrix:~/btp200/assign3> cat a3main.cpp 
+#include <cstdio>
+#include <iostream>
+#include <cstring>
+#include "GS1Prefix.h"
+#include "Order.h"
+
+#define MAXORDERS 100
+char menu(std::istream& is);
+bool style(std::istream&, char&);
+
+int main() {
+    char choice;
+    int noOrders = 0;
+    Order* order[MAXORDERS];
+    Prefix prefix("prefixRanges.txt");
+
+    std::cout << "Bookstore Order Processor\n"
+              << "=========================\n";
+
+    // process user input
+    do {
+        choice = menu(std::cin);
+        std::cout << std::endl;
+        switch(choice) {
+            case 'P':
+                {
+                    EAN ean;
+                    if (ean.read(std::cin, prefix)) {
+                        int index = -1, created = false;
+                        for (int i = 0; i < noOrders && index == -1; i++)
+                            if (ean == order[i]->getEAN())
+                                index = i;
+                        if (index == -1) {
+                            if (noOrders < MAXORDERS) {
+                                index = noOrders;
+                                order[noOrders++] = new Order(ean);
+                                created = true;
+                            }
+                            else {
+                                std::cerr << "No space for more orders!" << std::endl;
+                            }
+                        }
+                        if(!order[index]->add(std::cin) && created)
+                            delete order[--noOrders];
+                    }
+                }
+                break;
+            case 'A':
+                {
+                    EAN ean;
+                    if (ean.read(std::cin, prefix)) {
+                        int index = -1;
+                        for (int i = 0; i < noOrders && index == -1; i++)
+                            if (ean == order[i]->getEAN())
+                                index = i;
+                        if (index != -1)
+                            order[index]->add(1);
+                        else {
+                            std::cerr << "No order for " << ean;
+                            std::cerr << " found!" << std::endl;
+                        }
+                    }
+                }
+                break;
+            case 'D':
+                {
+                    EAN ean;
+                    if (ean.read(std::cin, prefix)) {
+                        int index = -1;
+                        for (int i = 0; i < noOrders && index == -1; i++)
+                            if (ean == order[i]->getEAN())
+                                index = i;
+                        if (index != -1)
+                            order[index]->receive(std::cin);
+                        else {
+                            std::cerr << "No order for " << ean;
+                            std::cerr << " found!" << std::endl;
+                        }
+                    }
+                }
+                break;
+            case 'F':
+                {
+					char s;
+					if (style(std::cin, s))
+                    for (int i = 0; i < noOrders; i++)
+						order[i]->getEAN().style(s);
+                }
+                break;
+            case 'V':
+                std::cout << "              EAN  Ordered  Delivered\n";
+                std::cout << "-------------------------------------\n";
+                for (int i = 0; i < noOrders; i++)
+                    std::cout << *order[i] << std::endl;
+                break;
+        }
+    } while (choice != 'Q');
+
+    std::cout << "\nSigning off ... " << std::endl;
+    // deallocate order memory
+    for (int i = 0; i < noOrders; i++)
+        delete order[i];
+}
+
+// menu prompts for and accepts an option selection from standard input and
+// returns the character identifying the selected option
+//
+char menu(std::istream& is) {
+    char c;
+    int  ok = false;
+
+    std::cout << '\n';
+    std::cout << "Please select from the following options :\n";
+    std::cout << " P - Place an order with a publisher\n";
+    std::cout << " A - Add one copy to an existing order\n";
+    std::cout << " D - Record a delivery from a publisher\n";
+	std::cout << " F - Change output style\n";
+    std::cout << " V - View status of books on order\n";
+    std::cout << " Q - Quit\n";
+    do {
+        std::cout << " Your selection : ";
+        c = ' ';
+        is.get(c);
+        if (c >= 'a' && c <= 'z')
+            c -= 'a' - 'A';
+        if (is.fail()) {
+            is.clear();
+            is.ignore(2000, '\n');
+            std::cerr << " Invalid input.  Try again." << std::endl;
+        } else if (c == '\n') {
+            ; // no input - try again
+        } else if (c != 'P' && c != 'A' && c != 'D' && c != 'V'
+         && c != 'Q' && c != 'F') {
+            is.ignore(2000, '\n');
+            std::cerr << " Invalid Character.  Try again." << std::endl;
+        } else if (is.get() != '\n') {
+            is.ignore(2000, '\n');
+            std::cerr << " Trailing Characters.  Try Again. " << std::endl;
+        } else if (c == 'P' || c == 'A' || c == 'D' || c == 'V'
+         || c == 'Q' || c == 'F')
+            ok = true;
+    } while (ok == 0);
+
+    return c;
+}
+
+// style prompts for and accepts the style from input stream is
+//
+bool style(std::istream& is, char& s) {
+	bool rc = false, ok = false;
+	char c;
+	do {
+		std::cout << " EAN Style ('-', ' ', '\\n' or '0' to quit) : ";
+		c = ' ';
+		is.get(c);
+		if (is.fail()) {
+			is.clear();
+			is.ignore(2000, '\n');
+			std::cerr << " Invalid input. Try again.\n";
+        } else if (c != '-' && c != ' ' && c != '\n' && c != '0') {
+            is.ignore(2000, '\n');
+            std::cerr << " Invalid Character.  Try again.\n";
+		} else if (c == '0') {
+			if (is.get() != '\n') {
+				is.ignore(2000, '\n');
+				std::cerr << " Trailing Characters.  Try Again.\n";
+			} else
+				ok = true;
+		} else if (c == '\n') {
+			ok = true;
+			s = '\0';
+			rc = true;
+        } else if (is.get() != '\n') {
+            is.ignore(2000, '\n');
+            std::cerr << " Trailing Characters.  Try Again.\n";
+        } else if (c == '-' || c == ' ') {
+            ok = true;
+			s = c;
+			rc = true;
+		}
+	} while (!ok);
+
+	return rc;
+}
+wdelhia@matrix:~/btp200/assign3> cat a3main.cpp [10Ptest3g++ -o test3 -std=c++0x a3test.cpp GS1Prefix.cpp EAN.cpp Order.cpp [C[1P[1P[1P[1P[1P[1@a[1@3[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[1P[1P[1P[1P[1@a[1P[1@m[1@a[1@i[1@n
+wdelhia@matrix:~/btp200/assign3> a3
+Bookstore Order Processor
+=========================
+
+Please select from the following options :
+ P - Place an order with a publisher
+ A - Add one copy to an existing order
+ D - Record a delivery from a publisher
+ F - Change output style
+ V - View status of books on order
+ Q - Quit
+ Your selection : 9789070002046
+ Invalid Character.  Try again.
+ Your selection : 9789070002046
+ Invalid Character.  Try again.
+ Your selection : 9789070002046
+ Invalid Character.  Try again.
+ Your selection : p
+
+Add EAN(0 to quit): ^[[A^[[A        9789070002046
+Quantity (0 to quit): 25
+
+Please select from the following options :
+ P - Place an order with a publisher
+ A - Add one copy to an existing order
+ D - Record a delivery from a publisher
+ F - Change output style
+ V - View status of books on order
+ Q - Quit
+ Your selection : p
+
+Add EAN(0 to quit): 9780003194876
+Quantity (0 to quit): 30
+
+Please select from the following options :
+ P - Place an order with a publisher
+ A - Add one copy to an existing order
+ D - Record a delivery from a publisher
+ F - Change output style
+ V - View status of books on order
+ Q - Quit
+ Your selection : r
+ Invalid Character.  Try again.
+ Your selection : d
+
+Add EAN(0 to quit): 9789070002046
+Quantity (0 to quit): 10
+
+Please select from the following options :
+ P - Place an order with a publisher
+ A - Add one copy to an existing order
+ D - Record a delivery from a publisher
+ F - Change output style
+ V - View status of books on order
+ Q - Quit
+ Your selection : d
+
+Add EAN(0 to quit): 9780003194875
+Invalid check digit. Try again.
+Add EAN(0 to quit): 9780003194876
+Quantity (0 to quit): -20
+Enter a positive number. Try again.
+Quantity (0 to quit): 0
+**No delivery recorded!
+
+Please select from the following options :
+ P - Place an order with a publisher
+ A - Add one copy to an existing order
+ D - Record a delivery from a publisher
+ F - Change output style
+ V - View status of books on order
+ Q - Quit
+ Your selection : v
+
+              EAN  Ordered  Delivered
+-------------------------------------
+978-90-70002-04-6       25         10
+978-0-00-319487-6       30          0
+
+Please select from the following options :
+ P - Place an order with a publisher
+ A - Add one copy to an existing order
+ D - Record a delivery from a publisher
+ F - Change output style
+ V - View status of books on order
+ Q - Quit
+ Your selection : d
+
+Add EAN(0 to quit): 9780003194876
+Quantity (0 to quit): 20
+
+Please select from the following options :
+ P - Place an order with a publisher
+ A - Add one copy to an existing order
+ D - Record a delivery from a publisher
+ F - Change output style
+ V - View status of books on order
+ Q - Quit
+ Your selection : p
+
+Add EAN(0 to quit): 9789995500009
+Quantity (0 to quit): 20
+
+Please select from the following options :
+ P - Place an order with a publisher
+ A - Add one copy to an existing order
+ D - Record a delivery from a publisher
+ F - Change output style
+ V - View status of books on order
+ Q - Quit
+ Your selection : v
+
+              EAN  Ordered  Delivered
+-------------------------------------
+978-90-70002-04-6       25         10
+978-0-00-319487-6       30         20
+    9789995500009       20          0
+
+Please select from the following options :
+ P - Place an order with a publisher
+ A - Add one copy to an existing order
+ D - Record a delivery from a publisher
+ F - Change output style
+ V - View status of books on order
+ Q - Quit
+ Your selection : a
+
+Add EAN(0 to quit): 9780003194876
+
+Please select from the following options :
+ P - Place an order with a publisher
+ A - Add one copy to an existing order
+ D - Record a delivery from a publisher
+ F - Change output style
+ V - View status of books on order
+ Q - Quit
+ Your selection : d
+
+Add EAN(0 to quit): 9789995500009
+Quantity (0 to quit): 25
+25 not on order. Only 20 are on order. Try again.
+Quantity (0 to quit): 20
+
+Please select from the following options :
+ P - Place an order with a publisher
+ A - Add one copy to an existing order
+ D - Record a delivery from a publisher
+ F - Change output style
+ V - View status of books on order
+ Q - Quit
+ Your selection : v
+
+              EAN  Ordered  Delivered
+-------------------------------------
+978-90-70002-04-6       25         10
+978-0-00-319487-6       31         20
+    9789995500009       20         20
+
+Please select from the following options :
+ P - Place an order with a publisher
+ A - Add one copy to an existing order
+ D - Record a delivery from a publisher
+ F - Change output style
+ V - View status of books on order
+ Q - Quit
+ Your selection : f
+
+ EAN Style ('-', ' ', '\n' or '0' to quit) :  
+
+Please select from the following options :
+ P - Place an order with a publisher
+ A - Add one copy to an existing order
+ D - Record a delivery from a publisher
+ F - Change output style
+ V - View status of books on order
+ Q - Quit
+ Your selection : v
+
+              EAN  Ordered  Delivered
+-------------------------------------
+978 90 70002 04 6       25         10
+978 0 00 319487 6       31         20
+    9789995500009       20         20
+
+Please select from the following options :
+ P - Place an order with a publisher
+ A - Add one copy to an existing order
+ D - Record a delivery from a publisher
+ F - Change output style
+ V - View status of books on order
+ Q - Quit
+ Your selection : q
+
+
+Signing off ... 
+wdelhia@matrix:~/btp200/assign3> exit
+exit
+
+Script done on Fri 03 Apr 2015 05:11:18 PM EDT
