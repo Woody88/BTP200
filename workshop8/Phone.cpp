@@ -40,7 +40,6 @@ void Phone::display() const {
 
 bool Phone::isValid() const {
 	bool valid = true;
-
 	if (area < 100 || area > 999)
 		valid = false;
 
@@ -52,3 +51,31 @@ bool Phone::isValid() const {
 	
 	return valid;
 }
+
+IntlPhone::IntlPhone() {
+	intl = 0;
+	
+}
+
+IntlPhone::IntlPhone(int a, int b , int c):Phone(b,c) {
+        intl = a;
+}
+
+void IntlPhone::display() const {
+	cout << intl;
+	cout << "-";	
+	Phone::display();
+	
+	
+}
+
+bool IntlPhone::isValid() const {
+	int valid = true;
+	
+	if(intl < 100 || intl > 999)
+		valid = false;
+
+	valid = Phone::isValid();
+
+	return valid;
+} 
