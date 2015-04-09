@@ -1,0 +1,87 @@
+Script started on Wed 08 Apr 2015 09:18:24 PM EDT
+wdelhia@matrix:~/btp200/workshop5-6> whoami
+wdelhia
+wdelhia@matrix:~/btp200/workshop5-6> whoami[2Pexitw5-6 [35@g++ -o w5-6 -std=c++0x w5-6.cpp Sum.cpp[C[11P[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[12Pcat Sum.h Sum.cpp
+class Sum {
+	int* array;
+	int k, sum, size;
+public:
+	Sum();
+	Sum(int);
+	Sum(const int*, int);
+	void display() const;
+	Sum& operator+=(int);
+
+};
+#include <iostream>
+#include "Sum.h"
+
+Sum::Sum(){
+	array = nullptr;
+	size = sum = 0;	
+}
+
+Sum::Sum(int n){
+	array = new int[n];
+	array[0] = 0;
+	sum = 0;
+	k = 0;
+	size = n;
+}
+Sum::Sum(const int* numbers,int nSize){	
+	
+	array = new int[nSize];
+	array[0] = 0; 
+	size = nSize;
+	sum = 0;
+        for(int i = 0; i < size; i++){
+                array[i]+=numbers[i];
+	}
+}
+void Sum::display() const{
+	int total = 0;
+	for(int i = 0; i < size; i++){
+		if (i == (size-1)) {
+			total+=array[i];
+			std::cout << array[i] << " = " << total << std::endl;
+		}
+		else 
+			std::cout << array[i]<< "+";
+			total+=array[i];
+	}
+}
+
+Sum& Sum::operator+=(int n){
+	if(k < size){
+		array[k] = n;
+		k++;
+	}
+	else {
+		std::cout << "No Room for anymore numbers " << n << " has not been added"<< std::endl;
+	}
+	return *this;
+}
+
+wdelhia@matrix:~/btp200/workshop5-6> cat Sum.h Sum.cpp[11Pwhoami[2Pexitw5-6 [35@g++ -o w5-6 -std=c++0x w5-6.cpp Sum.cpp[C
+wdelhia@matrix:~/btp200/workshop5-6> w5-6 
+how many numbers to sum together? 5
+Add a number to the sum (0 to quit):10
+Add a number to the sum (0 to quit):15
+Add a number to the sum (0 to quit):45
+Add a number to the sum (0 to quit):127
+Add a number to the sum (0 to quit):18
+Add a number to the sum (0 to quit):92
+No Room for anymore numbers 92 has not been added
+Add a number to the sum (0 to quit):0
+10+15+45+127+18 = 215
+--------------------------------------
+Copy Tests(Should not crash/Segfault!)
+Copy Constructor
+Operator= Tests
+self Assignment
+Destructor/safe copy test
+1+2+3+4 = 10
+wdelhia@matrix:~/btp200/workshop5-6> exit
+exit
+
+Script done on Wed 08 Apr 2015 09:19:01 PM EDT

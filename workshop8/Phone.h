@@ -7,7 +7,7 @@ class Phone {
 	
 	Phone();
 	Phone(int a, int b);
-	void display() const;
+	virtual void display() const;
 	bool isValid() const;	
 };
 
@@ -21,3 +21,8 @@ class IntlPhone : public Phone {
 	bool isValid() const;
 
 };
+
+std::istream& operator>>(std::istream&, Phone& p);
+std::istream& operator>>(std::istream&, IntlPhone& p);
+std::ostream& operator<<(std::ostream&, const Phone& p);
+std::ostream& operator<<(std::ostream&, const IntlPhone& p);

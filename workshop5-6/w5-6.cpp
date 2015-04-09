@@ -18,7 +18,6 @@ int main(){
 		cout<<"Add a number to the sum (0 to quit):";
 		if(cin>>n && n!=0){
 			list+=n;
-			cout << "next should be in operator" << endl;
 		}
 		else if(cin.fail())
 			cerr<<"Error, please re-enter"<<endl;

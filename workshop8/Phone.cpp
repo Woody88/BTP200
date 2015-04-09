@@ -78,4 +78,25 @@ bool IntlPhone::isValid() const {
 	valid = Phone::isValid();
 
 	return valid;
-} 
+}
+
+std::istream& operator>>(std::istream& is, Phone& p){
+	cout << "inside 1" << endl;
+	
+}
+std::istream& operator>>(std::istream& is, IntlPhone& p){
+	cout << "inside 2" << endl;
+	Phone phone;
+
+	int n = 0, country = 0;
+	cout << "Enter a Country: ";
+	is >> country;
+	is >> phone
+}
+std::ostream& operator<<(std::ostream&, const Phone& p){
+	cout << "inside 3" << endl;
+}
+std::ostream& operator<<(std::ostream&, const IntlPhone& p){
+	cout << "inside 4" << endl;
+}
+ 

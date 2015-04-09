@@ -37,8 +37,13 @@ void Sum::display() const{
 }
 
 Sum& Sum::operator+=(int n){
-	array[k] = n;
-	k++;
+	if(k < size){
+		array[k] = n;
+		k++;
+	}
+	else {
+		std::cout << "No Room for anymore numbers " << n << " has not been added"<< std::endl;
+	}
 	return *this;
 }
 
