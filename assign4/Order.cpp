@@ -1,4 +1,6 @@
 #include <iostream>
+#include <cstring>
+#include<string>
 #include <iomanip>
 #include "Order.h"
 using namespace std;
@@ -15,7 +17,7 @@ Order::Order(const EAN& ean){
 	delivered = 0;
 }
 
-EAN& Order::getEAN(){
+EAN& Order::getEAN() {
 	return ean;
 }
 
@@ -110,16 +112,60 @@ int Order::outstanding()const {
 	return ordered;
 }
 
-ostream& operator<<(std::ostream& os, const Order& order){
+ostream& operator<<(std::ostream& os, const iOrder& order){
 	order.display(os);
 }
-SpecialOrder::SpecialOrder();
-SpecialOrder::SpecialOrder(const EAN& isbn, const char* instr);
-SpecialOrder::SpecialOrder(const SpecialOrder& source);
-SpecialOrder::SpecialOrder& operator=(const SpecialOrder& source);
-SpecialOrder::~SpecialOrder();
-SpecialOrder::bool add(std::istream& is);
-SpecialOrder::void display(std::ostream& os) const;
+SpecialOrder::SpecialOrder() {
+	dInstruct = nullptr;
+}
+SpecialOrder::SpecialOrder(const EAN& isbn, const char* instr) : Order(isbn) {
+	std::cout << "inside special source 1" <<" " << sizeof(instr) <<  std::endl;
+	dInstruct = new char(sizeof(instr + 1));
+	strcpy(dInstruct, instr);
+}
+SpecialOrder::SpecialOrder(const SpecialOrder& source) {
+	std::cout << "inside special source 2" << std::endl;
+	*this = source;
+	
+}
+SpecialOrder& SpecialOrder::operator=(const SpecialOrder& source) {
+	std::cout << "inside special source 3 " << std::endl;
+	if(this != &source){
+		Order& order = *this;
+		order = source;
+		if (source.dInstruct != NULL)
+                 {
+                        dInstruct = new char[strlen(source.dInstruct) + 1];
+                        	strcpy(dInstruct, source.dInstruct);
+                 }
+        }
+	cout << "EAN(): " << Order::getEAN() <<  "& insturct: " << dInstruct << endl;
+	return *this;
+}
+SpecialOrder::~SpecialOrder() {
+	if(dInstruct != nullptr){
+		delete [] dInstruct;
+		dInstruct = nullptr;
+	}	
+}
+bool SpecialOrder::add(std::istream& is) {
+	string instruct;	
+	Order::add(is);
+	cout << "Instruction: ";
+	getline(is, instruct);
+	dInstruct = new char[instruct.length() + 1];
+	//dInstruct = instruct;
+	strcpy(dInstruct, instruct.c_str());
+         cout <<"cout of insturct: "<< instruct << endl;
+	return true;
+}
+void SpecialOrder::display(std::ostream& os) const {
+	Order::display(os);
+	os << " " << dInstruct;
+	
+
+	
+}
 
 
 
